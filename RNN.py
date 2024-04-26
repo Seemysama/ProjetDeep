@@ -89,6 +89,9 @@ model = RNNModel(img_size, 128, 2, 1)  # Utilisation de 128 unités cachées et 
 criterion = torch.nn.BCEWithLogitsLoss()  # Utilisation de BCEWithLogitsLoss pour la classification binaire
 optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001)
 
+# Supposons que vos images aient 3 canaux (RGB)
+num_channels = 3
+
 # Entraînement du modèle
 num_epochs = 12
 for epoch in range(num_epochs):
@@ -96,7 +99,7 @@ for epoch in range(num_epochs):
     running_loss = 0.0
     for inputs, labels in train_loader:
         # Réorganiser les dimensions des données d'entrée
-        inputs = inputs.view(-1, img_size * img_size)
+        inputs = inputs.view(inputs.size(0), -1)  # Aplatir chaque image individuellement
         # Remettre à zéro les gradients
         optimizer.zero_grad()
         # Transmettre les données au modèle
@@ -116,14 +119,13 @@ test_losses = []
 test_accs = []
 with torch.no_grad():
     for inputs, labels in test_loader:
-        inputs = inputs.view(-1, img_size * img_size)
+        inputs = inputs.view(inputs.size(0), -1)  # Aplatir chaque image individuellement
         outputs = model(inputs)
         test_loss = criterion(outputs.squeeze(), labels.float())
         test_losses.append(test_loss.item())
         test_acc = ((outputs > 0.5).float() == labels.unsqueeze(1).float()).float().mean()
         test_accs.append(test_acc.item())
 mean_test_loss = np.mean(test_losses)
-mean_test_acc = np.mean(test_accs)
 print(f'Test Loss: {mean_test_loss:.4f}, Test Accuracy: {mean_test_acc:.4f}')
 
 # Génération de la matrice de confusion
